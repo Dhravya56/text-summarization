@@ -1,0 +1,33 @@
+import streamlit as st
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+# Load summarization model (supports Hindi + English)
+model_name = "csebuetnlp/mT5_multilingual_XLSum"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+# App title
+st.set_page_config(page_title="Hindi & English Summarizer")
+st.title("📰 Multilingual Summarizer (Hindi & English)")
+
+# User input
+text = st.text_area("📌 Paste your article or news paragraph here:", height=200)
+
+# Language
+lang = st.selectbox("🌐 Select language of your input text:", ["English", "Hindi"])
+
+# Summarize on click
+if st.button("🧠 Generate Summary"):
+    if not text.strip():
+        st.warning("Please enter some text first.")
+    else:
+        # Add prefix for the model
+        prefix = "summarize: " + text.strip()
+
+        # Tokenize and summarize
+        inputs = tokenizer(prefix, return_tensors="pt", truncation=True, max_length=512)
+        output_ids = model.generate(inputs["input_ids"], max_length=100, num_beams=4, early_stopping=True)
+        summary = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+
+        st.success("📄 Summary:")
+        st.write(summary)
